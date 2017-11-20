@@ -14,17 +14,20 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.Collections;
 using Excel;
+using System.Text.RegularExpressions;
 
 namespace SpreadShirt
 {
     public partial class Form1 : Form
     {
         FrmProgress frmProgress;
-        static string Title = "", SubTitle = "", Tag = "";
+        static string Title = "", SubTitle = "", Tag = "", Headline = "";
+        static List<string> listPage = new List<string>();
         static string baseURL = "https://www.spreadshirt.com";
         DataTable dtShirts = new DataTable();
         List<string> listFileName = new List<string>();
-
+        string saveFileLocationName = "savedLocation.txt";
+        bool doCancel = false;
         public Form1()
         {
             InitializeComponent();
@@ -33,7 +36,11 @@ namespace SpreadShirt
 
         private void Form1_Load(object sender, EventArgs e)
         {
-            
+            if(File.Exists(saveFileLocationName))
+            {
+                string savedLocation = File.ReadAllText(saveFileLocationName);
+                txtSaveLocation.Text = savedLocation;
+            }
         }
 
         enum RequestType
@@ -65,6 +72,9 @@ namespace SpreadShirt
             Title = ((AngleSharpParser)parsers[0]).CurrentParser.Title;
             SubTitle = ((AngleSharpParser)parsers[0]).CurrentParser.SubTitle;
             Tag = ((AngleSharpParser)parsers[0]).CurrentParser.Tag;
+            Headline = ((AngleSharpParser)parsers[0]).CurrentParser.Headline;
+            if (type == RequestType.HTML)
+                listPage = ((AngleSharpParser)parsers[0]).CurrentParser.listPage;
             return ((AngleSharpParser)parsers[0]).CurrentParser.listHref;
         }
 
@@ -105,6 +115,13 @@ namespace SpreadShirt
 
         private void btnQuery_Click(object sender, EventArgs e)
         {
+            if (txtQuery.Text.TrimEnd() == "")
+            {
+                MessageBox.Show("Enter the content to query", "Notice", MessageBoxButtons.OK);
+                return;
+            }
+
+            doCancel = false;
             listResult.DataSource = null;
             txtLog.Text = "";
             txtLog.AppendText(String.Format("+++ Do search : {0} +++\r\n", txtQuery.Text));
@@ -134,6 +151,8 @@ namespace SpreadShirt
             frmProgress.UpdateProgressPercent(0);
             frmProgress.StartPosition = FormStartPosition.CenterParent;
             frmProgress.ShowDialog();
+
+            doCancel = frmProgress.isCancel;
         }
 
         private void btnBrowse_Click(object sender, EventArgs e)
@@ -145,12 +164,14 @@ namespace SpreadShirt
             {
                 string folder = dlg.SelectedPath;
                 txtSaveLocation.Text = folder;
+                File.WriteAllText(saveFileLocationName, folder);
             }
         }
 
         private void AddShirt(string filename)
         {
-            dtShirts.Rows.Add(filename, "", "Center", "Top", "Center", "Top", Title, SubTitle, "Funny", Tag, 7, Path.GetFileNameWithoutExtension(filename), "TRUE", "TRUE", 30);
+            string desc = "LIMITED EDITION ! Ending soon !\r\n\r\n100 % Printed in the U.S.A - Ship Worldwide \r\n\r\n* HOW TO ORDER?\r\n1.Select style and color\r\n2.Click Buy it Now\r\n3.Select size and quantity\r\n4.Enter shipping and billing information\r\n5.Done!Simple as that!\r\n\r\nTIP: SHARE it with your friends, order together and save on shipping.";
+            dtShirts.Rows.Add(filename, "", "Center", "Middle", "Center", "Top", Title, desc, "Funny", Tag, 3, Path.GetFileNameWithoutExtension(filename), "FALSE", "TRUE", 1);
         }
 
         private void ExportToExcel(string filePath)
@@ -174,8 +195,24 @@ namespace SpreadShirt
         {
             try
             {
+                #region First time request
+                string parentFolderName = Regex.Replace(txtQuery.Text.TrimEnd(), @"(\s+|@|&|'|\(|\)|<|>|#)", "");
                 string strQuery = @"/" + txtQuery.Text.TrimEnd().Replace(" ", "+") + "+gifts";
-                List<string> listHref = Request(baseURL + strQuery, RequestType.HTML);
+                string realheadline = txtQuery.Text.TrimEnd() + " gifts";
+                realheadline = Regex.Replace(realheadline.TrimEnd(), @"(\s+|@|&|'|\(|\)|<|>|#)", "");
+                List <string> listHref = Request(baseURL + strQuery, RequestType.HTML);//request page 1 first
+                Headline = Regex.Replace(Headline.TrimEnd(), @"(\s+|@|&|'|\(|\)|<|>|#)", "");
+                if (!realheadline.ToLower().Contains(Headline.ToLower()))//-> different headline -> not found any items
+                {
+                    this.BeginInvoke((Action)delegate ()
+                    {
+                        //code to update UI
+                        txtLog.AppendText(String.Format("Not found any items, headline : {0}", Headline));
+                        frmProgress.Close();
+                        txtQuery.Clear();
+                    });
+                    return;
+                }
                 //update UI
                 this.BeginInvoke((Action)delegate ()
                 {
@@ -184,9 +221,11 @@ namespace SpreadShirt
                     txtLog.AppendText(String.Format(" **** Finish search, there are : {0} results ****\r\n", listHref.Count));
                     listResult.DataSource = listHref;
                 });
-
+                #endregion
+                #region Request each shirt in page
                 for (int i = 0; i < listHref.Count; i++)
                 {
+                    if (doCancel) break;
                     string url = baseURL + listHref[i];
                     List<string> listImageURL = Request(url, RequestType.PNG);
                     //Title, Subtitle, Tag already updated
@@ -233,14 +272,14 @@ namespace SpreadShirt
                         string folderDir = "";
                         if (txtSaveLocation.Text != "")
                         {
-                            folderDir = txtSaveLocation.Text + @"\" + folderName;
+                            folderDir = txtSaveLocation.Text + @"\" + parentFolderName + @"\" + folderName;
                             if(!Directory.Exists(folderDir))
                                 Directory.CreateDirectory(folderDir);
                             fileName = folderDir + @"\" + fileName;
                         }
                         else
                         {
-                            folderDir = Application.StartupPath + @"\" + folderName;
+                            folderDir = Application.StartupPath + @"\" + parentFolderName + @"\" + folderName;
                             if (!Directory.Exists(folderDir))
                                 Directory.CreateDirectory(folderDir);
                             fileName = folderDir + @"\" + fileName;
@@ -251,20 +290,34 @@ namespace SpreadShirt
                         getImage(downloadURL, fileName);
                     }
                 }
-
+                #endregion
+                //end of request page 1
+                int defaultRequestPageNum = 1;
+                int currentPage = 1;
+                while(currentPage < defaultRequestPageNum)
+                {
+                    if (listPage.Count > currentPage)
+                    {
+                        string nextHref = listPage[currentPage];
+                    }
+                    else break;
+                }
+                #region Export all data to excel
                 string excelFolderPath = "";
                 if (txtSaveLocation.Text != "")
-                    excelFolderPath = txtSaveLocation.Text;
+                    excelFolderPath = txtSaveLocation.Text + @"\" + parentFolderName ;
                 else
-                    excelFolderPath = Application.StartupPath;
+                    excelFolderPath = Application.StartupPath + @"\" + parentFolderName;
                 if (!Directory.Exists(excelFolderPath))
                     Directory.CreateDirectory(excelFolderPath);
                 ExportToExcel(excelFolderPath + @"\Import.xlsx");
+                #endregion
                 //update UI
                 this.BeginInvoke((Action)delegate ()
                 {
                     //code to update UI
-                    frmProgress.Close();
+                    if(!doCancel)
+                        frmProgress.Close();
                     txtQuery.Clear();
                 });
             }

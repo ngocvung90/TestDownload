@@ -98,9 +98,11 @@
         }
 
         public List<string> listHref;
+        public List<string> listPage;
         public string Title = "";
         public string SubTitle = "";
         public string Tag = "";
+        public string Headline = "";
         #endregion
 
         #region Methods
@@ -145,10 +147,11 @@
         public HtmlDocument Parse(HtmlParserOptions options, bool isHTML = true)
         {
             listHref = new List<string>();
+            listPage = new List<string>();
             var token = default(HtmlToken);
             _tokenizer.IsStrictMode = options.IsStrictMode;
             _options = options;
-            bool bFoundTitle = false, bFoundSubTitle = false, bFoundTag = false;
+            bool bFoundTitle = false, bFoundSubTitle = false, bFoundTag = false, bFoundHeadline = false;
             do
             {
                 token = _tokenizer.Get();
@@ -156,21 +159,23 @@
                 if (bFoundTitle) { Title = str;  bFoundTitle = false; }
                 if (bFoundSubTitle) { SubTitle = str; bFoundSubTitle = false; }
                 if (bFoundTag) { Tag = str; bFoundTag = false; }
+                if (bFoundHeadline) { Headline = str; bFoundHeadline = false; }
                 #region find list href
                 if (str == "a" && isHTML)
                 {
                     if (token.HasContent)
                     {
-                        bool bFound = false;
+                        bool bFoundImageLink = false;
+                        bool bFoundPageLink = false;
                         HtmlTagToken tagToken = (HtmlTagToken)token;
                         for (int i = 0; i < tagToken.Attributes.Count; i++)
                         {
                             if (tagToken.Attributes[i].Value == "Wrapper image")
                             {
-                                bFound = true;
+                                bFoundImageLink = true;
                                 continue;
                             }
-                            if (bFound)
+                            if (bFoundImageLink)
                             {
                                 if (tagToken.Attributes[i].Key == "href")
                                 {
@@ -178,14 +183,28 @@
                                     break;
                                 }
                             }
+
+                            if (tagToken.Attributes[i].Value.Contains("gwt-Anchor number"))
+                            {
+                                bFoundPageLink = true;
+                                continue;
+                            }
+                            if (bFoundPageLink)
+                            {
+                                if (tagToken.Attributes[i].Key == "href")
+                                {
+                                    listPage.Add(tagToken.Attributes[i].Value);
+                                    break;
+                                }
+                            }
                         }
                     }
-                }
+                }        
                 #endregion
                 #region find png url
                 else if (str == "img" && !isHTML)
                 {
-                    if(token.HasContent)
+                    if (token.HasContent)
                     {
                         HtmlTagToken tagToken = (HtmlTagToken)token;
                         for (int i = 0; i < tagToken.Attributes.Count; i++)
@@ -195,7 +214,7 @@
                         }
                     }
                 }
-                else if(str == "div" && !isHTML)
+                else if (str == "div" && !isHTML)
                 {
                     if (token.HasContent)
                     {
@@ -219,6 +238,18 @@
                                 bFoundTag = true;
                                 break;
                             }
+                        }
+                    }
+                }
+                else if (str == "h1" && isHTML)
+                {
+                    HtmlTagToken tagToken = (HtmlTagToken)token;
+                    for (int i = 0; i < tagToken.Attributes.Count; i++)
+                    {
+                        if (tagToken.Attributes[i].Value == "headline")
+                        {
+                            bFoundHeadline = true;
+                            break;
                         }
                     }
                 }

@@ -31,6 +31,7 @@
             this.progressHTTP = new System.Windows.Forms.ProgressBar();
             this.lbDesc = new System.Windows.Forms.Label();
             this.lbPercent = new System.Windows.Forms.Label();
+            this.btnCancel = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
             // progressHTTP
@@ -62,12 +63,23 @@
             this.lbPercent.TabIndex = 2;
             this.lbPercent.Text = "label1";
             // 
+            // btnCancel
+            // 
+            this.btnCancel.Location = new System.Drawing.Point(216, 115);
+            this.btnCancel.Name = "btnCancel";
+            this.btnCancel.Size = new System.Drawing.Size(75, 23);
+            this.btnCancel.TabIndex = 3;
+            this.btnCancel.Text = "Cancel";
+            this.btnCancel.UseVisualStyleBackColor = true;
+            this.btnCancel.Click += new System.EventHandler(this.btnCancel_Click);
+            // 
             // FrmProgress
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.LightGoldenrodYellow;
-            this.ClientSize = new System.Drawing.Size(497, 120);
+            this.ClientSize = new System.Drawing.Size(497, 150);
+            this.Controls.Add(this.btnCancel);
             this.Controls.Add(this.lbPercent);
             this.Controls.Add(this.lbDesc);
             this.Controls.Add(this.progressHTTP);
@@ -76,7 +88,6 @@
             this.ShowIcon = false;
             this.ShowInTaskbar = false;
             this.Text = "FrmProgress";
-            this.TopMost = true;
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -87,5 +98,6 @@
         private System.Windows.Forms.ProgressBar progressHTTP;
         private System.Windows.Forms.Label lbDesc;
         private System.Windows.Forms.Label lbPercent;
+        private System.Windows.Forms.Button btnCancel;
     }
 }

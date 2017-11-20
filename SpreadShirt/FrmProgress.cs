@@ -12,8 +12,10 @@ namespace SpreadShirt
 {
     public partial class FrmProgress : Form
     {
+        public bool isCancel = false;
         public FrmProgress()
         {
+            isCancel = false;
             InitializeComponent();
         }
 
@@ -31,6 +33,12 @@ namespace SpreadShirt
         public int GetCurrentProgress()
         {
             return progressHTTP.Value;
+        }
+
+        private void btnCancel_Click(object sender, EventArgs e)
+        {
+            isCancel = true;
+            Close();
         }
     }
 }

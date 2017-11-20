@@ -92,9 +92,11 @@
         }
 
         public List<string> listHref;
+        public List<string> listPage;
         public string Title = "";
         public string SubTitle = "";
         public string Tag = "";
+        public string Headline = "";
         #endregion
 
         #region Methods
@@ -105,6 +107,7 @@
         public IHtmlDocument Parse(String source, bool isHTML = true)
         {
             listHref = new List<string>();
+            listPage = new List<string>();
             var document = CreateDocument(source);
             var parser = new HtmlDomBuilder(document);
             HtmlDocument retDoc = parser.Parse(_options, isHTML);
@@ -112,6 +115,8 @@
             Title = parser.Title;
             SubTitle = parser.SubTitle;
             Tag = parser.Tag;
+            Headline = parser.Headline;
+            listPage = parser.listPage;
             return retDoc;
         }
 
