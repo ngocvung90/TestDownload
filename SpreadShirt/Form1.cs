@@ -21,8 +21,9 @@ namespace SpreadShirt
     public partial class Form1 : Form
     {
         FrmProgress frmProgress;
-        static string Title = "", SubTitle = "", Tag = "", Headline = "";
+        static string Title = "", SubTitle = "", Tag = "", Headline = "", RedBubleTag = "";
         static List<string> listPage = new List<string>();
+        static public List<string> listRedbubleTag = new List<string>();
         static string baseURL = "https://www.spreadshirt.com";
         DataTable dtShirts = new DataTable();
         List<string> listFileName = new List<string>();
@@ -69,12 +70,19 @@ namespace SpreadShirt
             };
 
             testsuite.Run(type == RequestType.HTML);
-            Title = ((AngleSharpParser)parsers[0]).CurrentParser.Title;
-            SubTitle = ((AngleSharpParser)parsers[0]).CurrentParser.SubTitle;
-            Tag = ((AngleSharpParser)parsers[0]).CurrentParser.Tag;
-            Headline = ((AngleSharpParser)parsers[0]).CurrentParser.Headline;
+            if(((AngleSharpParser)parsers[0]).CurrentParser.Title != "")
+                Title = ((AngleSharpParser)parsers[0]).CurrentParser.Title;
+            if (((AngleSharpParser)parsers[0]).CurrentParser.SubTitle != "")
+                SubTitle = ((AngleSharpParser)parsers[0]).CurrentParser.SubTitle;
+            if (((AngleSharpParser)parsers[0]).CurrentParser.Tag != "")
+                Tag = ((AngleSharpParser)parsers[0]).CurrentParser.Tag;
+            if (((AngleSharpParser)parsers[0]).CurrentParser.Headline != "")
+                Headline = ((AngleSharpParser)parsers[0]).CurrentParser.Headline;
             if (type == RequestType.HTML)
+            {
                 listPage = ((AngleSharpParser)parsers[0]).CurrentParser.listPage;
+                listRedbubleTag = ((AngleSharpParser)parsers[0]).CurrentParser.listRedbubleTag;
+            }
             return ((AngleSharpParser)parsers[0]).CurrentParser.listHref;
         }
 
@@ -168,9 +176,21 @@ namespace SpreadShirt
             }
         }
 
+        public static bool CheckURLValid(string url)
+        {
+            Uri uriResult;
+            return Uri.TryCreate(url, UriKind.Absolute, out uriResult) && uriResult.Scheme == Uri.UriSchemeHttp;
+        }
         private void AddShirt(string filename)
         {
-            string desc = "LIMITED EDITION ! Ending soon !\r\n\r\n100 % Printed in the U.S.A - Ship Worldwide \r\n\r\n* HOW TO ORDER?\r\n1.Select style and color\r\n2.Click Buy it Now\r\n3.Select size and quantity\r\n4.Enter shipping and billing information\r\n5.Done!Simple as that!\r\n\r\nTIP: SHARE it with your friends, order together and save on shipping.";
+            for(int i = 0; i < listRedbubleTag.Count; i ++)
+            {
+                if (i == 0) Tag += ", ";
+                Tag += listRedbubleTag[i];
+                if (i < listRedbubleTag.Count - 1)
+                    Tag += ", ";
+            }
+            string desc = SubTitle + "\r\n LIMITED EDITION ! Ending soon !\r\n\r\n100 % Printed in the U.S.A - Ship Worldwide \r\n\r\n* HOW TO ORDER?\r\n1.Select style and color\r\n2.Click Buy it Now\r\n3.Select size and quantity\r\n4.Enter shipping and billing information\r\n5.Done!Simple as that!\r\n\r\nTIP: SHARE it with your friends, order together and save on shipping.\r\n" + Tag ;
             dtShirts.Rows.Add(filename, "", "Center", "Middle", "Center", "Top", Title, desc, "Funny", Tag, 3, Path.GetFileNameWithoutExtension(filename), "FALSE", "TRUE", 1);
         }
 
@@ -222,11 +242,18 @@ namespace SpreadShirt
                     listResult.DataSource = listHref;
                 });
                 #endregion
+                if(txtRedBubbleURL.Text != "" && txtRedBubbleURL.Text.Contains("https://www.redbubble.com"))
+                {
+                    //for getting redbuble tag
+                    Request(txtRedBubbleURL.Text, RequestType.HTML);
+                }
                 #region Request each shirt in page
                 for (int i = 0; i < listHref.Count; i++)
                 {
                     if (doCancel) break;
                     string url = baseURL + listHref[i];
+                    if (!url.Contains("shirt"))
+                        continue;
                     List<string> listImageURL = Request(url, RequestType.PNG);
                     //Title, Subtitle, Tag already updated
 

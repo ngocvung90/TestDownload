@@ -93,6 +93,7 @@
 
         public List<string> listHref;
         public List<string> listPage;
+        public List<string> listRedbubleTag;
         public string Title = "";
         public string SubTitle = "";
         public string Tag = "";
@@ -108,6 +109,7 @@
         {
             listHref = new List<string>();
             listPage = new List<string>();
+            listRedbubleTag = new List<string>();
             var document = CreateDocument(source);
             var parser = new HtmlDomBuilder(document);
             HtmlDocument retDoc = parser.Parse(_options, isHTML);
@@ -117,6 +119,7 @@
             Tag = parser.Tag;
             Headline = parser.Headline;
             listPage = parser.listPage;
+            listRedbubleTag = parser.listRedbubleTag;
             return retDoc;
         }
 

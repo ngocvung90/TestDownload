@@ -98,6 +98,7 @@
         }
 
         public List<string> listHref;
+        public List<string> listRedbubleTag;
         public List<string> listPage;
         public string Title = "";
         public string SubTitle = "";
@@ -148,6 +149,7 @@
         {
             listHref = new List<string>();
             listPage = new List<string>();
+            listRedbubleTag = new List<string>();
             var token = default(HtmlToken);
             _tokenizer.IsStrictMode = options.IsStrictMode;
             _options = options;
@@ -197,6 +199,13 @@
                                     break;
                                 }
                             }
+                        }
+
+                        //get redbubble tag
+                        if (tagToken.Attributes.Count == 3 && tagToken.Attributes[0].Key == "title" && tagToken.Attributes[1].Key == "class" && tagToken.Attributes[2].Key == "href")
+                        {
+                            if(!tagToken.Attributes[0].Value.Contains("Shirt"))
+                               listRedbubleTag.Add(tagToken.Attributes[0].Value);
                         }
                     }
                 }        
