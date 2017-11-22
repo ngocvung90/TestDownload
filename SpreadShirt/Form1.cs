@@ -19,7 +19,7 @@ using ImageManager;
 
 namespace SpreadShirt
 {
-    public partial class Form1 : Form
+    public partial class Form1 : Form, IMainFormDelegate
     {
         FrmProgress frmProgress;
         static string Title = "", SubTitle = "", Tag = "", Headline = "", RedBubleTag = "";
@@ -27,6 +27,7 @@ namespace SpreadShirt
         static public List<string> listRedbubleTag = new List<string>();
         static string baseURL = "https://www.spreadshirt.com";
         DataTable dtShirts = new DataTable();
+        List<string> listShirts = new List<string>();
         List<string> listFileName = new List<string>();
         string saveFileLocationName = "savedLocation.txt";
         bool doCancel = false;
@@ -43,6 +44,8 @@ namespace SpreadShirt
                 string savedLocation = File.ReadAllText(saveFileLocationName);
                 txtSaveLocation.Text = savedLocation;
             }
+
+            checkSpyBrand_CheckedChanged(null, null);
         }
 
         enum RequestType
@@ -124,7 +127,12 @@ namespace SpreadShirt
 
         private void btnQuery_Click(object sender, EventArgs e)
         {
-            if (txtQuery.Text.TrimEnd() == "")
+            if(checkSpyBrand.Checked && txtBrandUrl.Text.TrimEnd() == "")
+            {
+                MessageBox.Show("Enter the content to query", "Notice", MessageBoxButtons.OK);
+                return;
+            }
+            else if (!checkSpyBrand.Checked && txtQuery.Text.TrimEnd() == "")
             {
                 MessageBox.Show("Enter the content to query", "Notice", MessageBoxButtons.OK);
                 return;
@@ -134,6 +142,7 @@ namespace SpreadShirt
             listResult.DataSource = null;
             txtLog.Text = "";
             txtLog.AppendText(String.Format("+++ Do search : {0} +++\r\n", txtQuery.Text));
+            listShirts = new List<string>();
             listFileName.Clear();
             dtShirts = new DataTable();
             dtShirts.Columns.Add("Front", typeof(string));
@@ -159,9 +168,8 @@ namespace SpreadShirt
             frmProgress.UpdateProgressDesc(String.Format("Searching {0} ...", txtQuery.Text));
             frmProgress.UpdateProgressPercent(0);
             frmProgress.StartPosition = FormStartPosition.CenterParent;
+            frmProgress.SetOwnerDelegate(this);
             frmProgress.ShowDialog();
-
-            doCancel = frmProgress.isCancel;
         }
 
         private void btnBrowse_Click(object sender, EventArgs e)
@@ -191,7 +199,15 @@ namespace SpreadShirt
                 if (i < listRedbubleTag.Count - 1)
                     Tag += ", ";
             }
+            listShirts.Add(filename);
             string desc = SubTitle + "\r\n LIMITED EDITION ! Ending soon !\r\n\r\n100 % Printed in the U.S.A - Ship Worldwide \r\n\r\n* HOW TO ORDER?\r\n1.Select style and color\r\n2.Click Buy it Now\r\n3.Select size and quantity\r\n4.Enter shipping and billing information\r\n5.Done!Simple as that!\r\n\r\nTIP: SHARE it with your friends, order together and save on shipping.\r\n" + Tag ;
+            //file name depend on platform, default with 600x600
+            if(checkAllPlatform.Checked)
+            {
+                string folder = Path.GetDirectoryName(filename);
+                folder += @"\sunFrog";
+                filename = folder + @"\" + Path.GetFileName(filename);
+            }
             dtShirts.Rows.Add(filename, "", "Center", "Middle", "Center", "Top", Title, desc, "Funny", Tag, 3, Path.GetFileNameWithoutExtension(filename), "FALSE", "TRUE", 1);
         }
 
@@ -200,36 +216,41 @@ namespace SpreadShirt
             ExcelUtlity excelUtil = new ExcelUtlity();
             bool ret = excelUtil.WriteDataTableToExcel(dtShirts, "Sheet1", filePath);
 
-            //scale image 
-            for(int i = 0; i < dtShirts.Rows.Count; i ++)
+            if(checkAllPlatform.Checked)
             {
-                string path = dtShirts.Rows[i]["Front"].ToString();
-                string newPath = "";
-                #region Merch dimension WxH = 4500 x 5400
-                IImageInfo imgBaseMerch = WebManager.GetImageInfo(File.ReadAllBytes(path));
-                imgBaseMerch.FileName = Path.GetFileName(path);
-                imgBaseMerch.ContentType = Path.GetExtension(path);
+                //scale image 
+                for (int i = 0; i < listShirts.Count; i++)
+                {
+                    string path = listShirts[i];
+                    string newPath = "";
+                    #region Merch dimension WxH = 4500 x 5400
+                    IImageInfo imgBaseMerch = WebManager.GetImageInfo(File.ReadAllBytes(path));
+                    imgBaseMerch.FileName = Path.GetFileName(path);
+                    imgBaseMerch.ContentType = Path.GetExtension(path);
 
-                imgBaseMerch.Path = "merch";
-                IImageInfo imgMerch = imgBaseMerch.ResizeMe(5400, 4500);
-                newPath = Path.GetDirectoryName(path) + @"\" + imgBaseMerch.Path;
-                if (!Directory.Exists(newPath))
-                    Directory.CreateDirectory(newPath);
-                imgMerch.Save(newPath);
-                #endregion
+                    imgBaseMerch.Path = "merch";
+                    IImageInfo imgMerch = imgBaseMerch.ResizeMe(5400, 4500);
+                    newPath = Path.GetDirectoryName(path) + @"\" + imgBaseMerch.Path;
+                    if (!Directory.Exists(newPath))
+                        Directory.CreateDirectory(newPath);
+                    imgMerch.Save(newPath);
+                    #endregion
 
-                #region SunFrog dimension WxH = 2400 x 3200
-                IImageInfo imgBaseSunFrog = WebManager.GetImageInfo(File.ReadAllBytes(path));
-                imgBaseSunFrog.FileName = Path.GetFileName(path);
-                imgBaseSunFrog.ContentType = Path.GetExtension(path);
+                    #region SunFrog dimension WxH = 2400 x 3200
+                    IImageInfo imgBaseSunFrog = WebManager.GetImageInfo(File.ReadAllBytes(path));
+                    imgBaseSunFrog.FileName = Path.GetFileName(path);
+                    imgBaseSunFrog.ContentType = Path.GetExtension(path);
 
-                imgBaseSunFrog.Path = "sunFrog";
-                IImageInfo sunFrogImage = imgBaseSunFrog.ResizeMe(3200, 2400);
-                newPath = Path.GetDirectoryName(path) + @"\" + imgBaseSunFrog.Path;
-                if (!Directory.Exists(newPath))
-                    Directory.CreateDirectory(newPath);
-                sunFrogImage.Save(newPath);
-                #endregion
+                    imgBaseSunFrog.Path = "sunFrog";
+                    IImageInfo sunFrogImage = imgBaseSunFrog.ResizeMe(3200, 2400);
+                    newPath = Path.GetDirectoryName(path) + @"\" + imgBaseSunFrog.Path;
+                    if (!Directory.Exists(newPath))
+                        Directory.CreateDirectory(newPath);
+                    sunFrogImage.Save(newPath);
+
+                    //File.Copy(newPath + @"\" + imgBaseSunFrog.FileName, path, true);
+                    #endregion
+                }
             }
             //update UI
             this.BeginInvoke((Action)delegate ()
@@ -237,6 +258,21 @@ namespace SpreadShirt
                 //code to update UI
                 txtLog.AppendText(String.Format(" **** Finish export to excel, path : {0}  ****\r\n", filePath));
             });
+        }
+
+        private void checkSpyBrand_CheckedChanged(object sender, EventArgs e)
+        {
+            bool isSpyBrand = checkSpyBrand.Checked;
+            txtQuery.Enabled = !isSpyBrand;
+            txtRedBubbleURL.Enabled = !isSpyBrand;
+
+            txtBrandUrl.Enabled = isSpyBrand;
+            maxPage.Value = 1;
+
+            if (isSpyBrand)
+                txtBrandUrl.Focus();
+            else
+                txtQuery.Focus();
         }
 
         bool CheckExistFileName(string fileName)
@@ -250,22 +286,37 @@ namespace SpreadShirt
             {
                 #region First time request
                 string parentFolderName = Regex.Replace(txtQuery.Text.TrimEnd(), @"(\s+|@|&|'|\(|\)|<|>|#)", "");
-                string strQuery = @"/" + txtQuery.Text.TrimEnd().Replace(" ", "+") + "+gifts";
-                string realheadline = txtQuery.Text.TrimEnd();
-                realheadline = Regex.Replace(realheadline.TrimEnd(), @"(\s+|@|&|'|\(|\)|<|>|#)", "");
-                List <string> listHref = Request(baseURL + strQuery, RequestType.HTML);//request page 1 first
-                Headline = Regex.Replace(Headline.TrimEnd(), @"(\s+|@|&|'|\(|\)|<|>|#)", "");
-                if (!Headline.ToLower().Substring(0,5).Contains(realheadline.ToLower().Substring(0, 5)))//-> different headline -> not found any items
+                string queryURL = "";
+                List<string> listHref = new List<string>();
+                if (!checkSpyBrand.Checked)
                 {
-                    this.BeginInvoke((Action)delegate ()
+                    string strQuery = @"/" + txtQuery.Text.TrimEnd().Replace(" ", "+") + "+gifts";
+                    string realheadline = txtQuery.Text.TrimEnd();
+                    realheadline = Regex.Replace(realheadline.TrimEnd(), @"(\s+|@|&|'|\(|\)|<|>|#)", "");
+                    queryURL = baseURL + strQuery;
+                    listHref = Request(queryURL, RequestType.HTML);//request page 1 first
+                    Headline = Regex.Replace(Headline.TrimEnd(), @"(\s+|@|&|'|\(|\)|<|>|#)", "");
+                    if (!Headline.ToLower().Substring(0, 5).Contains(realheadline.ToLower().Substring(0, 5)))//-> different headline -> not found any items
                     {
-                        //code to update UI
-                        txtLog.AppendText(String.Format("Not found any items, headline : {0}", Headline));
-                        frmProgress.Close();
-                        txtQuery.Clear();
-                    });
-                    return;
+                        this.BeginInvoke((Action)delegate ()
+                        {
+                            //code to update UI
+                            txtLog.AppendText(String.Format("Not found any items, headline : {0}", Headline));
+                            frmProgress.Close();
+                            txtQuery.Clear();
+                        });
+                        return;
+                    }
                 }
+                else
+                {
+                    queryURL = txtBrandUrl.Text;
+                    listHref = Request(queryURL, RequestType.HTML);//request page 1 first
+                    parentFolderName = Path.GetFileNameWithoutExtension(txtBrandUrl.Text);
+                }
+
+                parentFolderName = Regex.Replace(parentFolderName.TrimEnd(), @"(\s+|@|&|'|\(|\)|<|>|#)", "");
+
                 //update UI
                 this.BeginInvoke((Action)delegate ()
                 {
@@ -304,8 +355,7 @@ namespace SpreadShirt
                 this.BeginInvoke((Action)delegate ()
                 {
                     //code to update UI
-                    if(!doCancel)
-                        frmProgress.Close();
+                    frmProgress.Close();
                     txtQuery.Clear();
                 });
             }
@@ -422,6 +472,11 @@ namespace SpreadShirt
                     txtLog.AppendText("Last page !!!" );
                 });
             }
-        }     
+        }
+
+        public void DoCancel()
+        {
+            doCancel = true;
+        }
     }
 }
