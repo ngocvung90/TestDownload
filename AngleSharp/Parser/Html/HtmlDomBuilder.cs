@@ -104,6 +104,7 @@
         public string SubTitle = "";
         public string Tag = "";
         public string Headline = "";
+        public string NextPageURL = "";
         #endregion
 
         #region Methods
@@ -150,6 +151,7 @@
             listHref = new List<string>();
             listPage = new List<string>();
             listRedbubleTag = new List<string>();
+            NextPageURL = "";
             var token = default(HtmlToken);
             _tokenizer.IsStrictMode = options.IsStrictMode;
             _options = options;
@@ -185,22 +187,13 @@
                                     break;
                                 }
                             }
-
-                            if (tagToken.Attributes[i].Value.Contains("gwt-Anchor number"))
-                            {
-                                bFoundPageLink = true;
-                                continue;
-                            }
-                            if (bFoundPageLink)
-                            {
-                                if (tagToken.Attributes[i].Key == "href")
-                                {
-                                    listPage.Add(tagToken.Attributes[i].Value);
-                                    break;
-                                }
-                            }
                         }
 
+                        //get next URL
+                        if (tagToken.Attributes.Count == 2 && tagToken.Attributes[0].Key == "class" && tagToken.Attributes[0].Value == "arrow forward ")
+                        {
+                            NextPageURL = tagToken.Attributes[1].Value;
+                        }
                         //get redbubble tag
                         if (tagToken.Attributes.Count == 3 && tagToken.Attributes[0].Key == "title" && tagToken.Attributes[1].Key == "class" && tagToken.Attributes[2].Key == "href")
                         {

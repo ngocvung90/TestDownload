@@ -15,6 +15,7 @@ using System.Windows.Forms;
 using System.Collections;
 using Excel;
 using System.Text.RegularExpressions;
+using ImageManager;
 
 namespace SpreadShirt
 {
@@ -22,7 +23,7 @@ namespace SpreadShirt
     {
         FrmProgress frmProgress;
         static string Title = "", SubTitle = "", Tag = "", Headline = "", RedBubleTag = "";
-        static List<string> listPage = new List<string>();
+        static string NextPageURL = "";
         static public List<string> listRedbubleTag = new List<string>();
         static string baseURL = "https://www.spreadshirt.com";
         DataTable dtShirts = new DataTable();
@@ -80,8 +81,8 @@ namespace SpreadShirt
                 Headline = ((AngleSharpParser)parsers[0]).CurrentParser.Headline;
             if (type == RequestType.HTML)
             {
-                listPage = ((AngleSharpParser)parsers[0]).CurrentParser.listPage;
                 listRedbubleTag = ((AngleSharpParser)parsers[0]).CurrentParser.listRedbubleTag;
+                NextPageURL = ((AngleSharpParser)parsers[0]).CurrentParser.NextPageURL;
             }
             return ((AngleSharpParser)parsers[0]).CurrentParser.listHref;
         }
@@ -198,6 +199,38 @@ namespace SpreadShirt
         {
             ExcelUtlity excelUtil = new ExcelUtlity();
             bool ret = excelUtil.WriteDataTableToExcel(dtShirts, "Sheet1", filePath);
+
+            //scale image 
+            for(int i = 0; i < dtShirts.Rows.Count; i ++)
+            {
+                string path = dtShirts.Rows[i]["Front"].ToString();
+                string newPath = "";
+                #region Merch dimension WxH = 4500 x 5400
+                IImageInfo imgBaseMerch = WebManager.GetImageInfo(File.ReadAllBytes(path));
+                imgBaseMerch.FileName = Path.GetFileName(path);
+                imgBaseMerch.ContentType = Path.GetExtension(path);
+
+                imgBaseMerch.Path = "merch";
+                IImageInfo imgMerch = imgBaseMerch.ResizeMe(5400, 4500);
+                newPath = Path.GetDirectoryName(path) + @"\" + imgBaseMerch.Path;
+                if (!Directory.Exists(newPath))
+                    Directory.CreateDirectory(newPath);
+                imgMerch.Save(newPath);
+                #endregion
+
+                #region SunFrog dimension WxH = 2400 x 3200
+                IImageInfo imgBaseSunFrog = WebManager.GetImageInfo(File.ReadAllBytes(path));
+                imgBaseSunFrog.FileName = Path.GetFileName(path);
+                imgBaseSunFrog.ContentType = Path.GetExtension(path);
+
+                imgBaseSunFrog.Path = "sunFrog";
+                IImageInfo sunFrogImage = imgBaseSunFrog.ResizeMe(3200, 2400);
+                newPath = Path.GetDirectoryName(path) + @"\" + imgBaseSunFrog.Path;
+                if (!Directory.Exists(newPath))
+                    Directory.CreateDirectory(newPath);
+                sunFrogImage.Save(newPath);
+                #endregion
+            }
             //update UI
             this.BeginInvoke((Action)delegate ()
             {
@@ -218,11 +251,11 @@ namespace SpreadShirt
                 #region First time request
                 string parentFolderName = Regex.Replace(txtQuery.Text.TrimEnd(), @"(\s+|@|&|'|\(|\)|<|>|#)", "");
                 string strQuery = @"/" + txtQuery.Text.TrimEnd().Replace(" ", "+") + "+gifts";
-                string realheadline = txtQuery.Text.TrimEnd() + " gifts";
+                string realheadline = txtQuery.Text.TrimEnd();
                 realheadline = Regex.Replace(realheadline.TrimEnd(), @"(\s+|@|&|'|\(|\)|<|>|#)", "");
                 List <string> listHref = Request(baseURL + strQuery, RequestType.HTML);//request page 1 first
                 Headline = Regex.Replace(Headline.TrimEnd(), @"(\s+|@|&|'|\(|\)|<|>|#)", "");
-                if (!realheadline.ToLower().Contains(Headline.ToLower()))//-> different headline -> not found any items
+                if (!Headline.ToLower().Substring(0,5).Contains(realheadline.ToLower().Substring(0, 5)))//-> different headline -> not found any items
                 {
                     this.BeginInvoke((Action)delegate ()
                     {
@@ -247,87 +280,15 @@ namespace SpreadShirt
                     //for getting redbuble tag
                     Request(txtRedBubbleURL.Text, RequestType.HTML);
                 }
-                #region Request each shirt in page
-                for (int i = 0; i < listHref.Count; i++)
-                {
-                    if (doCancel) break;
-                    string url = baseURL + listHref[i];
-                    if (!url.Contains("shirt"))
-                        continue;
-                    List<string> listImageURL = Request(url, RequestType.PNG);
-                    //Title, Subtitle, Tag already updated
-
-                    if (listImageURL.Count > 0)
-                    {
-                        int progressStep = 80 / listHref.Count;
-                        string downloadURL = baseURL + listImageURL[0];
-                        string fileName = Path.GetFileName(downloadURL);
-                        int count = 1;
-                        while(CheckExistFileName(fileName))
-                        {
-                            string extension = Path.GetExtension(fileName);
-                            fileName = Path.GetFileNameWithoutExtension(fileName);
-                            fileName += "_" + count.ToString() + extension;
-                            count++;
-                        }
-                        listFileName.Add(fileName);
-
-                        string folderName = Path.GetFileNameWithoutExtension(fileName);
-                        downloadURL = downloadURL.Replace("/mp", "");
-                        int indexCut = downloadURL.IndexOf(",width");
-                        if(indexCut > -1)
-                        {
-                            downloadURL = downloadURL.Substring(0, indexCut);
-                            downloadURL += "?height=600&mediatype=png";
-                        }
-                        else
-                        {
-                            this.BeginInvoke((Action)delegate ()
-                            {
-                                txtLog.AppendText(String.Format("Error when working with url {0} ... \r\n", downloadURL));
-                            });
-                        }
-                        //update UI
-                        this.BeginInvoke((Action)delegate ()
-                        {
-                            //code to update UI
-                            frmProgress.UpdateProgressPercent(frmProgress.GetCurrentProgress() + progressStep);
-                            frmProgress.UpdateProgressDesc(String.Format("Downloading {0} ...", fileName));
-                            txtLog.AppendText(String.Format("Downloading {0} ... \r\n", fileName));
-                        });
-
-                        string folderDir = "";
-                        if (txtSaveLocation.Text != "")
-                        {
-                            folderDir = txtSaveLocation.Text + @"\" + parentFolderName + @"\" + folderName;
-                            if(!Directory.Exists(folderDir))
-                                Directory.CreateDirectory(folderDir);
-                            fileName = folderDir + @"\" + fileName;
-                        }
-                        else
-                        {
-                            folderDir = Application.StartupPath + @"\" + parentFolderName + @"\" + folderName;
-                            if (!Directory.Exists(folderDir))
-                                Directory.CreateDirectory(folderDir);
-                            fileName = folderDir + @"\" + fileName;
-                        }
-                        AddShirt(fileName);
-                        string description = Title + "\r\n\r\n" + SubTitle + "\r\n\r\n" + Tag;
-                        File.WriteAllText(folderDir + @"\Description.txt", description);
-                        getImage(downloadURL, fileName);
-                    }
-                }
-                #endregion
+                GetImageList(listHref, parentFolderName);
                 //end of request page 1
-                int defaultRequestPageNum = 1;
+                int defaultRequestPageNum = (int)maxPage.Value;
                 int currentPage = 1;
                 while(currentPage < defaultRequestPageNum)
                 {
-                    if (listPage.Count > currentPage)
-                    {
-                        string nextHref = listPage[currentPage];
-                    }
-                    else break;
+                    if (NextPageURL == "") break;
+                    currentPage++;
+                    SearchNextPage(currentPage);
                 }
                 #region Export all data to excel
                 string excelFolderPath = "";
@@ -350,8 +311,117 @@ namespace SpreadShirt
             }
             catch (Exception ex)
             {
-                txtLog.AppendText(ex.ToString() + "\r\n");
+                this.BeginInvoke((Action)delegate ()
+                {
+                    txtLog.AppendText(ex.ToString() + "\r\n");
+                });
             }
-        }      
+        } 
+        
+        private void GetImageList(List<string> listHref, string parentFolderName)
+        {
+            #region Request each shirt in page
+            for (int i = 0; i < listHref.Count; i++)
+            {
+                if (doCancel) break;
+                string url = baseURL + listHref[i];
+                if (!url.Contains("shirt"))
+                    continue;
+                List<string> listImageURL = Request(url, RequestType.PNG);
+                //Title, Subtitle, Tag already updated
+
+                if (listImageURL.Count > 0)
+                {
+                    int progressStep = 80 / listHref.Count;
+                    string downloadURL = baseURL + listImageURL[0];
+                    string fileName = Path.GetFileName(downloadURL);
+                    int count = 1;
+                    while (CheckExistFileName(fileName))
+                    {
+                        string extension = Path.GetExtension(fileName);
+                        fileName = Path.GetFileNameWithoutExtension(fileName);
+                        fileName += "_" + count.ToString() + extension;
+                        count++;
+                    }
+                    listFileName.Add(fileName);
+
+                    string folderName = Path.GetFileNameWithoutExtension(fileName);
+                    downloadURL = downloadURL.Replace("/mp", "");
+                    int indexCut = downloadURL.IndexOf(",width");
+                    if (indexCut > -1)
+                    {
+                        downloadURL = downloadURL.Substring(0, indexCut);
+                        downloadURL += "?height=600&mediatype=png";
+                    }
+                    else
+                    {
+                        this.BeginInvoke((Action)delegate ()
+                        {
+                            txtLog.AppendText(String.Format("Error when working with url {0} ... \r\n", downloadURL));
+                        });
+                    }
+                    //update UI
+                    this.BeginInvoke((Action)delegate ()
+                    {
+                        //code to update UI
+                        frmProgress.UpdateProgressPercent(frmProgress.GetCurrentProgress() + progressStep);
+                        frmProgress.UpdateProgressDesc(String.Format("Downloading {0} ...", fileName));
+                        txtLog.AppendText(String.Format("Downloading {0} ... \r\n", fileName));
+                    });
+
+                    string folderDir = "";
+                    if (txtSaveLocation.Text != "")
+                    {
+                        folderDir = txtSaveLocation.Text + @"\" + parentFolderName + @"\" + folderName;
+                        if (!Directory.Exists(folderDir))
+                            Directory.CreateDirectory(folderDir);
+                        fileName = folderDir + @"\" + fileName;
+                    }
+                    else
+                    {
+                        folderDir = Application.StartupPath + @"\" + parentFolderName + @"\" + folderName;
+                        if (!Directory.Exists(folderDir))
+                            Directory.CreateDirectory(folderDir);
+                        fileName = folderDir + @"\" + fileName;
+                    }
+                    AddShirt(fileName);
+                    string description = Title + "\r\n\r\n" + SubTitle + "\r\n\r\n" + Tag;
+                    File.WriteAllText(folderDir + @"\Description.txt", description);
+                    getImage(downloadURL, fileName);
+                }
+            }
+            #endregion
+
+        }
+        private void SearchNextPage(int page)
+        {
+            if(NextPageURL != "")
+            {
+                this.BeginInvoke((Action)delegate ()
+                {
+                    txtLog.AppendText("Searching page : " + page);
+                    frmProgress.UpdatePage(page);
+                });
+                string parentFolderName = Regex.Replace(txtQuery.Text.TrimEnd(), @"(\s+|@|&|'|\(|\)|<|>|#)", "");
+                List<string> listHref = Request(NextPageURL, RequestType.HTML);//request next page
+                                                                               //update UI
+                this.BeginInvoke((Action)delegate ()
+                {
+                    //code to update UI
+                    frmProgress.UpdateProgressPercent(20);
+                    txtLog.AppendText(String.Format(" **** Finish search, there are : {0} results ****\r\n", listHref.Count));
+                    listResult.DataSource = listHref;
+                });
+
+                GetImageList(listHref, parentFolderName);
+            }
+            else
+            {
+                this.BeginInvoke((Action)delegate ()
+                {
+                    txtLog.AppendText("Last page !!!" );
+                });
+            }
+        }     
     }
 }

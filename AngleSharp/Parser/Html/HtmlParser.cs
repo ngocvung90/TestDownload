@@ -98,6 +98,7 @@
         public string SubTitle = "";
         public string Tag = "";
         public string Headline = "";
+        public string NextPageURL = "";
         #endregion
 
         #region Methods
@@ -120,6 +121,7 @@
             Headline = parser.Headline;
             listPage = parser.listPage;
             listRedbubleTag = parser.listRedbubleTag;
+            NextPageURL = parser.NextPageURL;
             return retDoc;
         }
 

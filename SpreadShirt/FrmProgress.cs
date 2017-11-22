@@ -35,6 +35,10 @@ namespace SpreadShirt
             return progressHTTP.Value;
         }
 
+        public void UpdatePage(int page)
+        {
+            lbPage.Text = "Querying page " + page.ToString();
+        }
         private void btnCancel_Click(object sender, EventArgs e)
         {
             isCancel = true;

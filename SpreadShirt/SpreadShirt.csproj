@@ -121,6 +121,10 @@
       <Project>{91f78c48-287e-41b5-9e49-44d6e1e31290}</Project>
       <Name>AngleSharp.Core</Name>
     </ProjectReference>
+    <ProjectReference Include="..\ImageManager\ImageManager.csproj">
+      <Project>{2f1b86ee-9a7f-4948-b15a-c123ccd57ef5}</Project>
+      <Name>ImageManager</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
