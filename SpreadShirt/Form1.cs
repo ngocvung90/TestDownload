@@ -26,7 +26,11 @@ namespace SpreadShirt
         static string NextPageURL = "";
         static public List<string> listRedbubleTag = new List<string>();
         static string baseURL = "https://www.spreadshirt.com";
-        DataTable dtShirts = new DataTable();
+        DataTable dtShirtsTS = new DataTable();
+        DataTable dtShirtsViral = new DataTable();
+        DataTable dtShirtsSunfrog = new DataTable();
+        DataTable dtShirtsTeezily = new DataTable();
+
         List<string> listShirts = new List<string>();
         List<string> listFileName = new List<string>();
         string saveFileLocationName = "savedLocation.txt";
@@ -144,22 +148,75 @@ namespace SpreadShirt
             txtLog.AppendText(String.Format("+++ Do search : {0} +++\r\n", txtQuery.Text));
             listShirts = new List<string>();
             listFileName.Clear();
-            dtShirts = new DataTable();
-            dtShirts.Columns.Add("Front", typeof(string));
-            dtShirts.Columns.Add("Back", typeof(string));
-            dtShirts.Columns.Add("Front Horizontal Align", typeof(string));
-            dtShirts.Columns.Add("Front Vertical Align", typeof(string));
-            dtShirts.Columns.Add("Back Horizontal Align", typeof(string));
-            dtShirts.Columns.Add("Back Vertical Align", typeof(string));
-            dtShirts.Columns.Add("Title", typeof(string));
-            dtShirts.Columns.Add("Description", typeof(string));
-            dtShirts.Columns.Add("Sunfrog Category", typeof(string));
-            dtShirts.Columns.Add("Keywords", typeof(string));
-            dtShirts.Columns.Add("Duration", typeof(int));
-            dtShirts.Columns.Add("Url", typeof(string));
-            dtShirts.Columns.Add("Private", typeof(string));
-            dtShirts.Columns.Add("Auto Restart", typeof(string));
-            dtShirts.Columns.Add("Goal", typeof(int));
+            #region Add column
+            dtShirtsTS = new DataTable();
+            dtShirtsTS.Columns.Add("Front", typeof(string));
+            dtShirtsTS.Columns.Add("Back", typeof(string));
+            dtShirtsTS.Columns.Add("Front Horizontal Align", typeof(string));
+            dtShirtsTS.Columns.Add("Front Vertical Align", typeof(string));
+            dtShirtsTS.Columns.Add("Back Horizontal Align", typeof(string));
+            dtShirtsTS.Columns.Add("Back Vertical Align", typeof(string));
+            dtShirtsTS.Columns.Add("Title", typeof(string));
+            dtShirtsTS.Columns.Add("Description", typeof(string));
+            dtShirtsTS.Columns.Add("Sunfrog Category", typeof(string));
+            dtShirtsTS.Columns.Add("Keywords", typeof(string));
+            dtShirtsTS.Columns.Add("Duration", typeof(int));
+            dtShirtsTS.Columns.Add("Url", typeof(string));
+            dtShirtsTS.Columns.Add("Private", typeof(string));
+            dtShirtsTS.Columns.Add("Auto Restart", typeof(string));
+            dtShirtsTS.Columns.Add("Goal", typeof(int));
+
+            dtShirtsViral = new DataTable();
+            dtShirtsViral.Columns.Add("Front", typeof(string));
+            dtShirtsViral.Columns.Add("Back", typeof(string));
+            dtShirtsViral.Columns.Add("Front Horizontal Align", typeof(string));
+            dtShirtsViral.Columns.Add("Front Vertical Align", typeof(string));
+            dtShirtsViral.Columns.Add("Back Horizontal Align", typeof(string));
+            dtShirtsViral.Columns.Add("Back Vertical Align", typeof(string));
+            dtShirtsViral.Columns.Add("Title", typeof(string));
+            dtShirtsViral.Columns.Add("Description", typeof(string));
+            dtShirtsViral.Columns.Add("Sunfrog Category", typeof(string));
+            dtShirtsViral.Columns.Add("Keywords", typeof(string));
+            dtShirtsViral.Columns.Add("Duration", typeof(int));
+            dtShirtsViral.Columns.Add("Url", typeof(string));
+            dtShirtsViral.Columns.Add("Private", typeof(string));
+            dtShirtsViral.Columns.Add("Auto Restart", typeof(string));
+            dtShirtsViral.Columns.Add("Goal", typeof(int));
+
+            dtShirtsSunfrog = new DataTable();
+            dtShirtsSunfrog.Columns.Add("Front", typeof(string));
+            dtShirtsSunfrog.Columns.Add("Front Horizontal Align", typeof(string));
+            dtShirtsSunfrog.Columns.Add("Front Vertical Align", typeof(string));
+            dtShirtsSunfrog.Columns.Add("Back Horizontal Align", typeof(string));
+            dtShirtsSunfrog.Columns.Add("Back Vertical Align", typeof(string));
+            dtShirtsSunfrog.Columns.Add("Title", typeof(string));
+            dtShirtsSunfrog.Columns.Add("Description", typeof(string));
+            dtShirtsSunfrog.Columns.Add("Sunfrog Category", typeof(string));
+            dtShirtsSunfrog.Columns.Add("Keywords", typeof(string));
+            dtShirtsSunfrog.Columns.Add("Duration", typeof(int));
+            dtShirtsSunfrog.Columns.Add("Url", typeof(string));
+            dtShirtsSunfrog.Columns.Add("Private", typeof(string));
+            dtShirtsSunfrog.Columns.Add("Auto Restart", typeof(string));
+            dtShirtsSunfrog.Columns.Add("Goal", typeof(int));
+
+            dtShirtsTeezily = new DataTable();
+            dtShirtsTeezily.Columns.Add("Front", typeof(string));
+            dtShirtsTeezily.Columns.Add("Back", typeof(string));
+            dtShirtsTeezily.Columns.Add("Front Horizontal Align", typeof(string));
+            dtShirtsTeezily.Columns.Add("Front Vertical Align", typeof(string));
+            dtShirtsTeezily.Columns.Add("Back Horizontal Align", typeof(string));
+            dtShirtsTeezily.Columns.Add("Back Vertical Align", typeof(string));
+            dtShirtsTeezily.Columns.Add("Title", typeof(string));
+            dtShirtsTeezily.Columns.Add("Description", typeof(string));
+            dtShirtsTeezily.Columns.Add("Sunfrog Category", typeof(string));
+            dtShirtsTeezily.Columns.Add("Keywords", typeof(string));
+            dtShirtsTeezily.Columns.Add("Duration", typeof(int));
+            dtShirtsTeezily.Columns.Add("Url", typeof(string));
+            dtShirtsTeezily.Columns.Add("Private", typeof(string));
+            dtShirtsTeezily.Columns.Add("Auto Restart", typeof(string));
+            dtShirtsTeezily.Columns.Add("Goal", typeof(int));
+
+            #endregion
 
             Thread t = new Thread(new ThreadStart(DoSearch));
             t.Start();
@@ -194,27 +251,32 @@ namespace SpreadShirt
         {
             for(int i = 0; i < listRedbubleTag.Count; i ++)
             {
-                if (i == 0) Tag += ", ";
+                if (i == 0) Tag += ",";
                 Tag += listRedbubleTag[i];
                 if (i < listRedbubleTag.Count - 1)
-                    Tag += ", ";
+                    Tag += ",";
             }
+            Tag = Tag.Replace("Tags:", "");
+            Tag = Tag.Replace(" ", "");
             listShirts.Add(filename);
-            string desc = SubTitle + "\r\n LIMITED EDITION ! Ending soon !\r\n\r\n100 % Printed in the U.S.A - Ship Worldwide \r\n\r\n* HOW TO ORDER?\r\n1.Select style and color\r\n2.Click Buy it Now\r\n3.Select size and quantity\r\n4.Enter shipping and billing information\r\n5.Done!Simple as that!\r\n\r\nTIP: SHARE it with your friends, order together and save on shipping.\r\n" + Tag ;
+            string desc = /*SubTitle + */"LIMITED EDITION ! Ending soon !\r\n\r\n100 % Printed in the U.S.A - Ship Worldwide \r\n\r\n* HOW TO ORDER?\r\n1.Select style and color\r\n2.Click Buy it Now\r\n3.Select size and quantity\r\n4.Enter shipping and billing information\r\n5.Done!Simple as that!\r\n\r\nTIP: SHARE it with your friends, order together and save on shipping.\r\n" /*+ Tag */;
             //file name depend on platform, default with 600x600
             if(checkAllPlatform.Checked)
             {
                 string folder = Path.GetDirectoryName(filename);
                 folder += @"\sunFrog";
-                filename = folder + @"\" + Path.GetFileName(filename);
+                string sun_viralFilename = folder + @"\" + Path.GetFileName(filename);
+                dtShirtsSunfrog.Rows.Add(sun_viralFilename, "", "Center", "Middle", "Center", "Top", Title, desc, "Funny", Tag, 3, Path.GetFileNameWithoutExtension(filename), "FALSE", "TRUE", 1);
+                dtShirtsViral.Rows.Add(sun_viralFilename, "", "Center", "Middle", "Center", "Top", Title, desc, "Funny", Tag, 3, Path.GetFileNameWithoutExtension(filename), "FALSE", "TRUE", 1);
             }
-            dtShirts.Rows.Add(filename, "", "Center", "Middle", "Center", "Top", Title, desc, "Funny", Tag, 3, Path.GetFileNameWithoutExtension(filename), "FALSE", "TRUE", 1);
+            dtShirtsTS.Rows.Add(filename, "", "Center", "Middle", "Center", "Top", Title, desc, "Funny", Tag, 3, Path.GetFileNameWithoutExtension(filename), "FALSE", "TRUE", 1);
+            dtShirtsTeezily.Rows.Add(filename, "", "Center", "Middle", "Center", "Top", Title, desc, "Funny", Tag, 3, Path.GetFileNameWithoutExtension(filename), "FALSE", "TRUE", 1);
         }
 
         private void ExportToExcel(string filePath)
         {
             ExcelUtlity excelUtil = new ExcelUtlity();
-            bool ret = excelUtil.WriteDataTableToExcel(dtShirts, "Sheet1", filePath);
+            bool ret = excelUtil.WriteDataTableToExcel(dtShirtsTS, "Sheet1", filePath);
 
             if(checkAllPlatform.Checked)
             {
@@ -222,18 +284,19 @@ namespace SpreadShirt
                 for (int i = 0; i < listShirts.Count; i++)
                 {
                     string path = listShirts[i];
+                    if (!File.Exists(path)) continue;
                     string newPath = "";
                     #region Merch dimension WxH = 4500 x 5400
-                    IImageInfo imgBaseMerch = WebManager.GetImageInfo(File.ReadAllBytes(path));
-                    imgBaseMerch.FileName = Path.GetFileName(path);
-                    imgBaseMerch.ContentType = Path.GetExtension(path);
+                    //IImageInfo imgBaseMerch = WebManager.GetImageInfo(File.ReadAllBytes(path));
+                    //imgBaseMerch.FileName = Path.GetFileName(path);
+                    //imgBaseMerch.ContentType = Path.GetExtension(path);
 
-                    imgBaseMerch.Path = "merch";
-                    IImageInfo imgMerch = imgBaseMerch.ResizeMe(5400, 4500);
-                    newPath = Path.GetDirectoryName(path) + @"\" + imgBaseMerch.Path;
-                    if (!Directory.Exists(newPath))
-                        Directory.CreateDirectory(newPath);
-                    imgMerch.Save(newPath);
+                    //imgBaseMerch.Path = "merch";
+                    //IImageInfo imgMerch = imgBaseMerch.ResizeMe(5400, 4500);
+                    //newPath = Path.GetDirectoryName(path) + @"\" + imgBaseMerch.Path;
+                    //if (!Directory.Exists(newPath))
+                    //    Directory.CreateDirectory(newPath);
+                    //imgMerch.Save(newPath);
                     #endregion
 
                     #region SunFrog dimension WxH = 2400 x 3200
@@ -247,10 +310,14 @@ namespace SpreadShirt
                     if (!Directory.Exists(newPath))
                         Directory.CreateDirectory(newPath);
                     sunFrogImage.Save(newPath);
-
-                    //File.Copy(newPath + @"\" + imgBaseSunFrog.FileName, path, true);
                     #endregion
                 }
+
+                string folder = Path.GetDirectoryName(filePath);
+
+                excelUtil.WriteDataTableToExcel(dtShirtsSunfrog, "Sheet1", folder + @"\Import_SunFrog.xlsx");
+                excelUtil.WriteDataTableToExcel(dtShirtsViral, "Sheet1", folder + @"\Import_Viral.xlsx");
+                excelUtil.WriteDataTableToExcel(dtShirtsTeezily, "Sheet1", folder + @"\Import_Teezily.xlsx");
             }
             //update UI
             this.BeginInvoke((Action)delegate ()
@@ -453,6 +520,8 @@ namespace SpreadShirt
                     frmProgress.UpdatePage(page);
                 });
                 string parentFolderName = Regex.Replace(txtQuery.Text.TrimEnd(), @"(\s+|@|&|'|\(|\)|<|>|#)", "");
+                if (checkSpyBrand.Checked)
+                    parentFolderName = Regex.Replace(Path.GetFileNameWithoutExtension(txtBrandUrl.Text), @"(\s+|@|&|'|\(|\)|<|>|#)", "");
                 List<string> listHref = Request(NextPageURL, RequestType.HTML);//request next page
                                                                                //update UI
                 this.BeginInvoke((Action)delegate ()
