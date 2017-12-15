@@ -142,6 +142,7 @@ namespace ImageManager
         internal void SaveImageFile(System.IO.FileStream fs, string path)
         {
             Bitmap bmp = new System.Drawing.Bitmap(fs);
+            bmp.SetResolution(300, 300);
             if (Path.GetExtension(path).Equals(".gif"))
                 bmp.Save(fs, ImageFormat.Gif);
             else if (Path.GetExtension(path).Equals(".png"))

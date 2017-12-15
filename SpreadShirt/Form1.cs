@@ -16,6 +16,7 @@ using System.Collections;
 using Excel;
 using System.Text.RegularExpressions;
 using ImageManager;
+using System.Drawing.Imaging;
 
 namespace SpreadShirt
 {
@@ -185,6 +186,7 @@ namespace SpreadShirt
 
             dtShirtsSunfrog = new DataTable();
             dtShirtsSunfrog.Columns.Add("Front", typeof(string));
+            dtShirtsSunfrog.Columns.Add("Back", typeof(string));
             dtShirtsSunfrog.Columns.Add("Front Horizontal Align", typeof(string));
             dtShirtsSunfrog.Columns.Add("Front Vertical Align", typeof(string));
             dtShirtsSunfrog.Columns.Add("Back Horizontal Align", typeof(string));
@@ -261,15 +263,27 @@ namespace SpreadShirt
             listShirts.Add(filename);
             string desc = /*SubTitle + */"LIMITED EDITION ! Ending soon !\r\n\r\n100 % Printed in the U.S.A - Ship Worldwide \r\n\r\n* HOW TO ORDER?\r\n1.Select style and color\r\n2.Click Buy it Now\r\n3.Select size and quantity\r\n4.Enter shipping and billing information\r\n5.Done!Simple as that!\r\n\r\nTIP: SHARE it with your friends, order together and save on shipping.\r\n" /*+ Tag */;
             //file name depend on platform, default with 600x600
-            if(checkAllPlatform.Checked)
+            string folder = Path.GetDirectoryName(filename);
+            folder += @"\sunFrog";
+            string sun_viralFilename = folder + @"\" + Path.GetFileName(filename);
+
+            //build sunfrog tag
+            string[] arrKeywords = Tag.Split(',');
+            string strSunfrogTag = "";
+            if (arrKeywords.Length > 3)
             {
-                string folder = Path.GetDirectoryName(filename);
-                folder += @"\sunFrog";
-                string sun_viralFilename = folder + @"\" + Path.GetFileName(filename);
-                dtShirtsSunfrog.Rows.Add(sun_viralFilename, "", "Center", "Middle", "Center", "Top", Title, desc, "Funny", Tag, 3, Path.GetFileNameWithoutExtension(filename), "FALSE", "TRUE", 1);
-                dtShirtsViral.Rows.Add(sun_viralFilename, "", "Center", "Middle", "Center", "Top", Title, desc, "Funny", Tag, 3, Path.GetFileNameWithoutExtension(filename), "FALSE", "TRUE", 1);
+                string newKey = "";
+                for (int i = 0; i < 3; i++)
+                {
+                    newKey += arrKeywords[i];
+                    if (i != 2) newKey += ",";
+                }
+                strSunfrogTag = newKey;
             }
-            dtShirtsTS.Rows.Add(filename, "", "Center", "Middle", "Center", "Top", Title, desc, "Funny", Tag, 3, Path.GetFileNameWithoutExtension(filename), "FALSE", "TRUE", 1);
+
+            dtShirtsSunfrog.Rows.Add(sun_viralFilename, "", "Center", "Middle", "Center", "Top", Title, Title, "Funny", strSunfrogTag, 3, Path.GetFileNameWithoutExtension(filename), "FALSE", "TRUE", 1);
+            dtShirtsViral.Rows.Add(sun_viralFilename, "", "Center", "Middle", "Center", "Top", Title, desc, "Funny", Tag, 4, Path.GetFileNameWithoutExtension(filename), "FALSE", "TRUE", 10);
+            dtShirtsTS.Rows.Add(sun_viralFilename, "", "Center", "Middle", "Center", "Top", Title, desc, "Funny", Tag, 3, Path.GetFileNameWithoutExtension(filename), "FALSE", "TRUE", 1);
             dtShirtsTeezily.Rows.Add(filename, "", "Center", "Middle", "Center", "Top", Title, desc, "Funny", Tag, 3, Path.GetFileNameWithoutExtension(filename), "FALSE", "TRUE", 1);
         }
 
@@ -278,12 +292,13 @@ namespace SpreadShirt
             ExcelUtlity excelUtil = new ExcelUtlity();
             bool ret = excelUtil.WriteDataTableToExcel(dtShirtsTS, "Sheet1", filePath);
 
-            if(checkAllPlatform.Checked)
+           // if(checkAllPlatform.Checked)
             {
                 //scale image 
                 for (int i = 0; i < listShirts.Count; i++)
                 {
                     string path = listShirts[i];
+
                     if (!File.Exists(path)) continue;
                     string newPath = "";
                     #region Merch dimension WxH = 4500 x 5400
@@ -304,9 +319,9 @@ namespace SpreadShirt
                     imgBaseSunFrog.FileName = Path.GetFileName(path);
                     imgBaseSunFrog.ContentType = Path.GetExtension(path);
 
-                    imgBaseSunFrog.Path = "sunFrog";
+                    imgBaseSunFrog.Path = Path.GetDirectoryName(path);
                     IImageInfo sunFrogImage = imgBaseSunFrog.ResizeMe(3200, 2400);
-                    newPath = Path.GetDirectoryName(path) + @"\" + imgBaseSunFrog.Path;
+                    newPath = Path.GetDirectoryName(path) + @"\" + "sunFrog";
                     if (!Directory.Exists(newPath))
                         Directory.CreateDirectory(newPath);
                     sunFrogImage.Save(newPath);
@@ -330,7 +345,9 @@ namespace SpreadShirt
         private void checkSpyBrand_CheckedChanged(object sender, EventArgs e)
         {
             bool isSpyBrand = checkSpyBrand.Checked;
+            txtQuery.Text = "";
             txtQuery.Enabled = !isSpyBrand;
+            txtRedBubbleURL.Text = "";
             txtRedBubbleURL.Enabled = !isSpyBrand;
 
             txtBrandUrl.Enabled = isSpyBrand;
@@ -347,6 +364,13 @@ namespace SpreadShirt
             int index = listFileName.FindIndex(s => s == fileName);
             return index != -1;
         }
+
+        private void checkAllPlatform_CheckedChanged(object sender, EventArgs e)
+        {
+            bool check = checkAllPlatform.Checked;
+            int b = 1;
+        }
+
         private void DoSearch()
         {
             try
@@ -408,6 +432,7 @@ namespace SpreadShirt
                     currentPage++;
                     SearchNextPage(currentPage);
                 }
+
                 #region Export all data to excel
                 string excelFolderPath = "";
                 if (txtSaveLocation.Text != "")

@@ -151,10 +151,10 @@ namespace ConvertImage
                         }
                         else if (cCnt == 8)//desc culumn
                             strSunfrog = dataRowSunFrog[6].ToString();
-                        else if(cCnt == 10)//col keyword, sunfrog only allow 3 keyword
+                        else if (cCnt == 10)//col keyword, sunfrog only allow 3 keyword
                         {
                             string[] arrKeywords = str.Split(',');
-                            if(arrKeywords.Length > 3)
+                            if (arrKeywords.Length > 3)
                             {
                                 string newKey = "";
                                 for (int i = 0; i < 3; i++)
@@ -166,6 +166,10 @@ namespace ConvertImage
                             }
 
                         }
+                        else if (cCnt == 11)
+                            strSunfrog = "10";
+                        else if (cCnt == 15)
+                            strSunfrog = "4";
                         arrValues.Add(str);
                         dataRow[col] = str;
                         dataRowSunFrog[col] = strSunfrog;

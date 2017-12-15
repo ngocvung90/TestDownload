@@ -29,6 +29,7 @@
         private void InitializeComponent()
         {
             this.groupBox1 = new System.Windows.Forms.GroupBox();
+            this.checkAllPlatform = new System.Windows.Forms.CheckBox();
             this.txtBrandUrl = new System.Windows.Forms.TextBox();
             this.checkSpyBrand = new System.Windows.Forms.CheckBox();
             this.label2 = new System.Windows.Forms.Label();
@@ -44,7 +45,6 @@
             this.groupBox4 = new System.Windows.Forms.GroupBox();
             this.btnBrowse = new System.Windows.Forms.Button();
             this.txtSaveLocation = new System.Windows.Forms.TextBox();
-            this.checkAllPlatform = new System.Windows.Forms.CheckBox();
             this.groupBox1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.maxPage)).BeginInit();
             this.groupBox2.SuspendLayout();
@@ -71,6 +71,18 @@
             this.groupBox1.TabIndex = 0;
             this.groupBox1.TabStop = false;
             this.groupBox1.Text = "Query Information";
+            // 
+            // checkAllPlatform
+            // 
+            this.checkAllPlatform.AutoSize = true;
+            this.checkAllPlatform.ForeColor = System.Drawing.Color.DarkRed;
+            this.checkAllPlatform.Location = new System.Drawing.Point(6, 241);
+            this.checkAllPlatform.Name = "checkAllPlatform";
+            this.checkAllPlatform.Size = new System.Drawing.Size(128, 20);
+            this.checkAllPlatform.TabIndex = 12;
+            this.checkAllPlatform.Text = "Up all platform";
+            this.checkAllPlatform.UseVisualStyleBackColor = true;
+            this.checkAllPlatform.CheckedChanged += new System.EventHandler(this.checkAllPlatform_CheckedChanged);
             // 
             // txtBrandUrl
             // 
@@ -240,17 +252,6 @@
             this.txtSaveLocation.Name = "txtSaveLocation";
             this.txtSaveLocation.Size = new System.Drawing.Size(289, 26);
             this.txtSaveLocation.TabIndex = 4;
-            // 
-            // checkAllPlatform
-            // 
-            this.checkAllPlatform.AutoSize = true;
-            this.checkAllPlatform.ForeColor = System.Drawing.Color.DarkRed;
-            this.checkAllPlatform.Location = new System.Drawing.Point(6, 241);
-            this.checkAllPlatform.Name = "checkAllPlatform";
-            this.checkAllPlatform.Size = new System.Drawing.Size(128, 20);
-            this.checkAllPlatform.TabIndex = 12;
-            this.checkAllPlatform.Text = "Up all platform";
-            this.checkAllPlatform.UseVisualStyleBackColor = true;
             // 
             // Form1
             // 
