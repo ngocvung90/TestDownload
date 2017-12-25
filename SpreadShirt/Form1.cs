@@ -18,7 +18,7 @@ using System.Text.RegularExpressions;
 using ImageManager;
 using System.Drawing.Imaging;
 
-namespace SpreadShirt
+namespace SpreadShirtMutiKey
 {
     public partial class Form1 : Form, IMainFormDelegate
     {

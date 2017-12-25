@@ -8,7 +8,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-namespace SpreadShirt.Properties {
+namespace SpreadShirtMutiKey.Properties {
     using System;
     
     

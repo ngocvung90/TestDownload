@@ -1,4 +1,4 @@
-﻿namespace SpreadShirt
+﻿namespace SpreadShirtMutiKey
 {
     partial class Form1
     {
